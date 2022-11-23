@@ -30,17 +30,8 @@ void InitBuffer();
 void reset();
 void TimerFunction(int value);
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 7.5f, -4.0f); // 쿼터뷰            위에서 내려봄 0.0f / 7.0f / -0.5f         정면 0.0f / 4.0f / 0.0f
-glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 0.5f, 0.0f);
-
-glm::vec3 Top_View= glm::vec3(0.0f, 7.0f, -0.5f);
-glm::vec3 Top_cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 Top_cameraUp = glm::vec3(0.0f, 0.5f, 0.0f);
-
-
 GLfloat move_z = 0.0f; // 미로 생성에 translate에 쓰이는 z값
-GLfloat scale_y[10][10], size_change[10][10]; // 미로 size 증가/감소에 쓰이는 scale/y값
+GLfloat scale_y[10][10], store_scale_y[10][10], size_change[10][10]; // 미로 size 증가, 처음 미로의 y크기 저장, 감소에 쓰이는 scale/y값
 int remove_maze[10][10]; // 미로생성할 때 지울 곳을 저장해주는 값
 GLfloat object_speed = 0.01f; // 객체 움직임 속도 값
 GLfloat mx = 0.4f, my = -0.15f, mz = 0.0f; // 객체 위치
@@ -48,11 +39,25 @@ GLfloat p_p_figures = 10.0f; // 직각 투영 수치
 GLfloat turn_dir = 1, radians = 0.0f, speed = 5.0f; // 도는 방향, 각도, 각도의 타이머당 증가량
 
 BOOL but_O = false, but_P = true, m_maze_rect = false, object_appear = false;
-BOOL turn_camera = false;
+BOOL turn_camera = false, first_view = false;
 
 int row, col, f_row = 0, f_col = 1;
 
 GLfloat colors[3][12][3][3];
+
+glm::vec3 Top_View = glm::vec3(0.0f, 7.0f, -0.5f);
+glm::vec3 Top_cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 Top_cameraUp = glm::vec3(0.0f, 0.5f, 0.0f);
+
+glm::vec3 first_pointofview_pos = glm::vec3(mx, my + 0.0005f, mz - 0.0005f);
+glm::vec3 first_pointofview_dir = glm::vec3(mx, my, mz);
+
+glm::vec3 third_pointofview_pos = glm::vec3(0.0f, 4.5f, -6.5f);
+glm::vec3 third_pointofview_dir = glm::vec3(0.0f, 0.0f, 0.0f);
+
+glm::vec3 cameraPos = third_pointofview_pos; // 쿼터뷰            위에서 내려봄 0.0f / 7.0f / -0.5f         정면 0.0f / 4.0f / 0.0f
+glm::vec3 cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 0.5f, 0.0f);
 
 objRead objReader;
 GLint s1 = objReader.loadObj_normalize_center("cube.obj");
@@ -98,10 +103,13 @@ int main(int argc, char** argv)
 		}
 		exit(0);
 	}
+	srand(time(0));
 	for (int i = 0; i < row; i++) {
 		for (int k = 0; k < col; k++) {
-			scale_y[i][k] = 0.2f;
-			size_change[i][k] = 0.05f;
+			GLfloat rd = float(rand() % 6) / 10.0f + 0.2f;
+			scale_y[i][k] = rd;
+			store_scale_y[i][k] = rd;
+			size_change[i][k] = 0.01f;
 		}
 	}
 	for (int a = 0; a < 3; a++) {
@@ -109,7 +117,30 @@ int main(int argc, char** argv)
 			for (int j = 0; j < 3; j++)
 				for (int k = 0; k < 3; k++) {
 					if (a == 0) {
-						colors[a][i][j][k] = 0.5f;
+						if (i < 4) {
+							if (k == 0)
+								colors[a][i][j][k] = 1.0f;
+							else if (k == 1)
+								colors[a][i][j][k] = 0.0f;
+							else
+								colors[a][i][j][k] = 0.5f;
+						}
+						else if (i >= 4 && i < 8) {
+							if (k == 0)
+								colors[a][i][j][k] = 0.0f;
+							else if (k == 1)
+								colors[a][i][j][k] = 1.0f;
+							else
+								colors[a][i][j][k] = 0.5f;
+						}
+						else if (i >= 8 && i < 12) {
+							if (k == 0)
+								colors[a][i][j][k] = 1.0f;
+							else if (k == 1)
+								colors[a][i][j][k] = 1.0f;
+							else
+								colors[a][i][j][k] = 0.0f;
+						}
 					}
 					else if (a == 1) {
 						if (k != 1)
@@ -119,9 +150,11 @@ int main(int argc, char** argv)
 					}
 					else if (a == 2) {
 						if (k == 0)
-							colors[a][i][j][k] = 1.0f;
+							colors[a][i][j][k] = 0.8f;
+						else if (k == 1)
+							colors[a][i][j][k] = 0.8f;
 						else
-							colors[a][i][j][k] = 0.0f;
+							colors[a][i][j][k] = 1.0f;
 					}
 				}
 		}
@@ -279,6 +312,13 @@ void DrawScene(unsigned int modelLocation, unsigned int viewLocation, unsigned i
 
 		TR = translate(TR, glm::vec3(mx, my, mz));
 
+		if (first_view) {
+			first_pointofview_pos = glm::vec3(mx, my + 0.0005f, mz - 0.0005f);
+			first_pointofview_dir = glm::vec3(mx, my, mz);
+			cameraPos = first_pointofview_pos;
+			cameraDirection = first_pointofview_dir;
+		}
+
 		TR = scale(TR, glm::vec3(0.1f, 0.05f, 0.1f));
 
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
@@ -304,7 +344,7 @@ void DrawScene(unsigned int modelLocation, unsigned int viewLocation, unsigned i
 }
 void Display()
 {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(1.0f, 0.5f, 0.5f, 0.5f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (draw_type == 1)
@@ -434,23 +474,27 @@ void Keyboard(unsigned char key, int x, int y)
 		mx -= object_speed;
 		break;
 		}
-	case '+': case '=':
+	case '+': case '=': // 속도 UP
 		object_speed += 0.005f;
 		if (object_speed > 0.03f)
 			object_speed -= 0.005f;
 		break;
-	case '-': case '_':
+	case '-': case '_': // 속도 DOWN
 		object_speed -= 0.005f;
 		if (object_speed < 0.0f)
 			object_speed += 0.005f;
 		break;
-	case '1':
-		
+	case '1': // 1인칭 시점
+		if (object_appear) {
+			cameraPos = first_pointofview_pos;
+			cameraDirection = first_pointofview_dir;
+			first_view = true;
+		}
 ;		break;
-	case '3':
-		cameraPos.x = 0.0f;
-		cameraPos.y = 7.5f;
-		cameraPos.z = -4.0f;
+	case '3': // 3인칭 시점
+		first_view = false;
+		cameraPos = third_pointofview_pos;
+		cameraDirection = third_pointofview_dir;
 		break;
 	case 'c': case 'C': // 전체 위치, bool변수 초기화
 		reset();
@@ -464,42 +508,45 @@ void Keyboard(unsigned char key, int x, int y)
 		break;
 	
 	}
-	printf("%c\n", key);
+	printf("%c키 명령을 받았습니다\n", key);
 	InitBuffer();
 	glutPostRedisplay();
 }
 void reset() {
+	// bool 변수
 	but_O = false, but_P = true, m_maze_rect = false;
 	object_appear = false; turn_camera = false;
+	first_view = false;
+
+	// 미로
+	f_row = 0; f_col = 1;
 	for (int a = 0; a < row; a++)
 		for (int b = 0; b < col; b++)
 			remove_maze[a][b] = 0;
-	object_speed = 0.01f;
-	for (int i = 0; i < row; i++) {
-		for (int k = 0; k < col; k++) {
-			scale_y[i][k] = 0.2f;
-			size_change[i][k] = 0.05f;
-		}
-	}
-	cameraPos = glm::vec3(0.0f, 7.5f, -4.0f);
-	f_row = 0; f_col = 1;
-	mx = 0.4f, my = -0.15f, mz = 0.0f;
+	for (int i = 0; i < row; i++)
+		for (int k = 0; k < col; k++)
+			scale_y[i][k] = store_scale_y[i][k];
+	
+	// 카메라
+	cameraPos = third_pointofview_pos;
+	cameraDirection = third_pointofview_dir;
 	turn_dir = 1, radians = 0.0f, speed = 5.0f;
+
+	// 객체
+	object_speed = 0.01f;
+	mx = 0.4f, my = -0.15f, mz = 0.0f;
 }
 void TimerFunction(int value)
 {
-	srand(time(0));
-	int r; // 미로 만들때 랜덤한 값
 	if (m_maze_rect) {
 		for (int i = 0; i < row; i++) {
 			for (int k = 0; k < col; k++) {
-				r = rand() % 3;
-				if(r == 0)
+				if (k % 3 == 0)
 					scale_y[i][k] += size_change[i][k];
-				else if (r == 1)
-					scale_y[i][k] += size_change[i][k] / 2.0f;
-				else if (r == 2)
-					scale_y[i][k] += size_change[i][k] / 3.0f;
+				else if (k % 3 == 1)
+					scale_y[i][k] += size_change[i][k] * 2.0f;
+				else if (k % 3 == 2)
+					scale_y[i][k] += size_change[i][k] * 4.0f;
 
 				if (scale_y[i][k] >= 0.9f || scale_y[i][k] <= 0.2f)
 					size_change[i][k] *= -1;
