@@ -446,30 +446,6 @@ void Display()
 void Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
-		{
-	case 'x':
-		cameraPos.x += 0.5f;
-		break;
-	case 'X':
-		cameraPos.x -= 0.5f;
-		break;
-	case 'y':
-		cameraPos.y += 0.5f;
-		break;
-	case 'Y':
-		cameraPos.y -= 0.5f;
-		printf("%f %f %f", cameraPos.x, cameraPos.y, cameraPos.z);
-		break;
-	case 'z':
-		cameraPos.z += 0.5f;
-		break;
-	case 'Z':
-		cameraPos.z -= 0.5f;
-		break;
-	case 'e': case'E':
-		printf("%f %f %f", cameraPos.x, cameraPos.y, cameraPos.z);
-		break;
-	}
 	case 'o': case 'O': // 직각 투영
 		but_O = true;
 		but_P = false;
@@ -533,6 +509,7 @@ void Keyboard(unsigned char key, int x, int y)
 			for (int k = 0; k < col; k++)
 				scale_y[i][k] = store_scale_y[i][k];
 		m_maze_rect = true;
+		glutTimerFunc(100, TimerFunction, 1);
 		break;
 	case 'i': case 'I': // 객체 등장 원래 s/S 임
 		object_appear = true;
@@ -653,7 +630,7 @@ void collision_check(const char* kindofmove) {
 			if (remove_maze[i][k] == -1) {
 				if ((mz >= float(arrive_pos[0]) * 0.4f - 0.1f && mz <= float(arrive_pos[0]) * 0.4f + 0.1f)
 					&& (mx >= float(arrive_pos[1]) * 0.4f - 0.1f && mx <= float(arrive_pos[1]) * 0.4f + 0.1f)) {
-					printf("YOU REACHED ARRIVE POINT!!!!!!!!!!");
+					printf("\n\n\nYOU REACHED ARRIVE POINT!!!!!!!!!!\n\n\n");
 					exit(0);
 				}
 			}
